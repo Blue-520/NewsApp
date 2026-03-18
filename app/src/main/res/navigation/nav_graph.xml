@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.blue.newsapp.ui.home.HomeFragment"
+        android:label="首页">
+        <action
+            android:id="@+id/action_homeFragment_to_newsDetailFragment"
+            app:destination="@id/newsDetailFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_favoriteNewsFragment"
+            app:destination="@id/favoriteNewsFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_mineFragment"
+            app:destination="@id/mineFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/newsDetailFragment"
+        android:name="com.blue.newsapp.ui.detail.NewsDetailFragment"
+        android:label="新闻详情" >
+
+        <!-- 标题 -->
+        <argument
+            android:name="title"
+            app:argType="string" />
+
+        <!-- 图片地址 -->
+        <argument
+            android:name="imageUrl"
+            app:argType="string"
+            android:defaultValue="" />
+
+        <!-- 来源 -->
+        <argument
+            android:name="sourceName"
+            app:argType="string"
+            android:defaultValue="" />
+
+        <!-- 发布时间 -->
+        <argument
+            android:name="publishedAt"
+            app:argType="string"
+            android:defaultValue="" />
+
+        <!-- 简介 -->
+        <argument
+            android:name="description"
+            app:argType="string"
+            android:defaultValue="" />
+
+        <!-- 原文链接 -->
+        <argument
+            android:name="url"
+            app:argType="string"
+            android:defaultValue="" />
+
+        <action
+            android:id="@+id/action_newsDetailFragment_to_newsWebFragment"
+            app:destination="@id/newsWebFragment" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/newsWebFragment"
+        android:name="com.blue.newsapp.ui.web.NewsWebFragment"
+        android:label="新闻原文" >
+
+        <argument
+            android:name="url"
+            app:argType="string"/>
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/searchFragment"
+        android:name="com.blue.newsapp.ui.search.SearchFragment"
+        android:label="搜索" >
+        <action
+            android:id="@+id/action_searchFragment_to_newsDetailFragment"
+            app:destination="@id/newsDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/favoriteNewsFragment"
+        android:name="com.blue.newsapp.ui.FavoriteNews.FavoriteNewsFragment"
+        android:label="FavoriteNewsFragment" >
+        <action
+            android:id="@+id/action_favoriteNewsFragment_to_newsDetailFragment"
+            app:destination="@id/newsDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/mineFragment"
+        android:name="com.blue.newsapp.ui.mine.MineFragment"
+        android:label="MineFragment" >
+        <action
+            android:id="@+id/action_mineFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/action_mineFragment_to_registerFragment"
+            app:destination="@id/registerFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.blue.newsapp.ui.login.LoginFragment"
+        android:label="LoginFragment" >
+        <action
+            android:id="@+id/action_loginFragment_to_registerFragment"
+            app:destination="@id/registerFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/registerFragment"
+        android:name="com.blue.newsapp.ui.login.RegisterFragment"
+        android:label="RegisterFragment" />
+
+</navigation>
