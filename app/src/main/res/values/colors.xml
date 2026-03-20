@@ -2,4 +2,31 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- 主色：柔和雾蓝 -->
+    <color name="primary_blue">#6F9FCF</color>
+
+    <!-- 主色深一点，按钮按下/强调可用 -->
+    <color name="primary_blue_dark">#5D89B5</color>
+
+    <!-- 很浅的蓝色，用于选中背景、轻提示 -->
+    <color name="primary_blue_light">#DCEAF7</color>
+
+    <!-- 整个 App 页面背景 -->
+    <color name="app_bg">#F5F8FC</color>
+
+    <!-- 卡片 / 列表内容背景 -->
+    <color name="surface_bg">#FFFFFF</color>
+
+    <!-- 主文字 -->
+    <color name="text_primary">#1F2A37</color>
+
+    <!-- 次文字 -->
+    <color name="text_secondary">#7B8794</color>
+
+    <!-- 分割线 -->
+    <color name="divider_color">#E6ECF2</color>
+
+    <!-- 按钮文字 / 白字 -->
+    <color name="on_primary">#FFFFFF</color>
 </resources>

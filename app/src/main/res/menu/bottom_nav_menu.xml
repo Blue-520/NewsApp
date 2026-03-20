@@ -3,13 +3,15 @@
     <item
         android:id="@+id/homeFragment"
         android:title="首页"
-        />
+        android:icon="@drawable/home"/>
 
     <item
         android:id="@+id/favoriteNewsFragment"
-        android:title="收藏"/>
+        android:title="收藏"
+        android:icon="@drawable/favorite"/>
 
     <item
         android:id="@+id/mineFragment"
-        android:title="我的"/>
+        android:title="我的"
+        android:icon="@drawable/mine"/>
 </menu>

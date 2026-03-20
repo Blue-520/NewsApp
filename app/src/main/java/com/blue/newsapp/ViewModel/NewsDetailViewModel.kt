@@ -10,13 +10,13 @@ import androidx.lifecycle.viewModelScope
 import com.blue.newsapp.data.loacl.database.UserPreferences
 import com.blue.newsapp.data.loacl.entity.FavoriteNewsEntity
 import com.blue.newsapp.data.loacl.entity.NewsCommentEntity
-import com.blue.newsapp.repository.NewLocalReposity
+import com.blue.newsapp.repository.NewLocalRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class NewsDetailViewModel(application: Application): AndroidViewModel(application) {
 
-    private val reposity = NewLocalReposity.getInstance(application)
+    private val repository = NewLocalRepository.getInstance(application)
     private val userPreFerences = UserPreferences(application)
 
     // 当前详情页对应的新闻 url
@@ -45,7 +45,7 @@ class NewsDetailViewModel(application: Application): AndroidViewModel(applicatio
 
             favoriteSource?.let { removeSource(it) }
 
-            favoriteSource= reposity.getFavoriteNewsByUserIdAndUrl(userId, url)
+            favoriteSource= repository.getFavoriteNewsByUserIdAndUrl(userId, url)
             favoriteSource?.let { source ->
                 addSource(source) { favorite ->
                     value = favorite
@@ -64,11 +64,18 @@ class NewsDetailViewModel(application: Application): AndroidViewModel(applicatio
         }
     }
 
+    //给兴趣加分
+    fun increaseScore(category: String){
+        viewModelScope.launch {
+            repository.increaseUserInterestScore(currentUserId.value ?: -1, category, 2)
+        }
+    }
+
 
 
     // 当前新闻的评论列表
     val commentList: LiveData<List<NewsCommentEntity>> = currentNewsUrl.switchMap { url ->
-        reposity.getCommentsByNewsUrl(url)
+        repository.getCommentsByNewsUrl(url)
     }
 
     /**
@@ -99,7 +106,7 @@ class NewsDetailViewModel(application: Application): AndroidViewModel(applicatio
 
             if (userId == -1L) return@launch
 
-            reposity.insertFavorite(FavoriteNewsEntity(userId = userId, url = url, title = title, imageUrl = imageUrl, sourceName = sourceName, publishedAt = publishedAt, description = description))
+            repository.insertFavorite(FavoriteNewsEntity(userId = userId, url = url, title = title, imageUrl = imageUrl, sourceName = sourceName, publishedAt = publishedAt, description = description))
         }
     }
 
@@ -112,7 +119,7 @@ class NewsDetailViewModel(application: Application): AndroidViewModel(applicatio
 
             if (userId == -1L) return@launch
 
-            reposity.deleteFavoriteByUserIdAndUrl(userId, url)
+            repository.deleteFavoriteByUserIdAndUrl(userId, url)
         }
     }
 
@@ -121,7 +128,7 @@ class NewsDetailViewModel(application: Application): AndroidViewModel(applicatio
      */
     fun addComment(newsUrl: String, content: String){
         viewModelScope.launch {
-            reposity.insertComment(NewsCommentEntity(newsUrl = newsUrl, content = content))
+            repository.insertComment(NewsCommentEntity(newsUrl = newsUrl, content = content))
         }
     }
 

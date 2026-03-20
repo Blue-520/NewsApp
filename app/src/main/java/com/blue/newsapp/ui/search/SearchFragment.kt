@@ -8,21 +8,31 @@ import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import com.blue.newsapp.R
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.blue.newsapp.ViewModel.SearchViewModel
 import com.blue.newsapp.databinding.FragmentSearchBinding
+import com.blue.newsapp.ui.home.HomeFragmentDirections
 import com.blue.newsapp.ui.home.NewsAdapter
+
 
 class SearchFragment: Fragment() {
     private var _binding : FragmentSearchBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var newsAdapter: NewsAdapter
-
     private val viewModel : SearchViewModel by viewModels()
 
-    // 记录当前搜索词，方便下拉刷新时重复搜索
-    private var currentKeyword: String = ""
+    private val newsAdapter by lazy {
+        NewsAdapter{ article ->
+            val action = SearchFragmentDirections.actionSearchFragmentToNewsDetailFragment(title = article.title,
+                imageUrl = article.urlToImage ?: "", sourceName = article.source.name,
+                publishedAt = article.publishedAt ?: "", description = article.description ?: "",
+                url = article.url, category = article.category ?: "general")
+
+            findNavController().navigate(action)
+            //viewModel.saveNews(article, article.category ?: "general")
+        }
+    }
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -36,11 +46,9 @@ class SearchFragment: Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.searchView
-
-        viewModel.searchResult.observe(viewLifecycleOwner){
-
-        }
+        initRecyclerView()
+        initClick()
+        observeViewModel()
     }
 
     override fun onDestroyView() {
@@ -48,42 +56,54 @@ class SearchFragment: Fragment() {
         _binding = null
     }
 
-    /*private fun setRecyclrView(){
-        newsAdapter = NewsAdapter(){ article ->
-            val action = SearchFragmentDirections.actionSearchFragmentToNewsDetailFragment(article)
+    private fun initRecyclerView() {
+        binding.rvSearchNews.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = newsAdapter
         }
-    }*/
-
-    /**
-     * 初始化搜索框
-     */
-    private fun setupSearchView(){
-        binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener{
-
-            // 点击键盘搜索按钮时触发
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                val keyword = query?.trim().orEmpty()
-                if (keyword.isNotEmpty()){
-                    currentKeyword = keyword
-                    viewModel.search(keyword)
-
-                    // 收起焦点，界面更自然一点
-                    binding.searchView.clearFocus()
-                }
-                return true
-            }
-
-            override fun onQueryTextChange(newText: String?): Boolean {
-                // 这里先不做“边输入边搜索”
-                // 后面如果你想优化，我再带你做防抖搜索
-                return true
-            }
-        })
     }
 
-    private fun observeViewModel(){
-        viewModel.searchResult.observe(viewLifecycleOwner){ articles ->
+    private fun initClick() {
+        binding.ivBack.setOnClickListener {
+            findNavController().navigateUp()
+        }
 
+        binding.tvSearch.setOnClickListener {
+            doSearch()
+        }
+
+        binding.etSearch.setOnEditorActionListener { _, _, _ ->
+            doSearch()
+            true
+        }
+    }
+
+    private fun doSearch() {
+        val query = binding.etSearch.text.toString().trim()
+        viewModel.searchNews(query)
+    }
+
+    private fun observeViewModel() {
+        viewModel.searchResultList.observe(viewLifecycleOwner) { list ->
+            newsAdapter.submitList(list)
+
+            binding.tvState.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
+            if (list.isEmpty()) {
+                binding.tvState.text = "没有搜索到相关新闻"
+            }
+        }
+
+        viewModel.loading.observe(viewLifecycleOwner){ isLoading ->
+            binding.loading.visibility = if (isLoading) View.VISIBLE else View.GONE
+        }
+
+        viewModel.errorMessage.observe(viewLifecycleOwner){ msg ->
+            if (!msg.isNullOrEmpty()){
+                binding.tvState.visibility = View.VISIBLE
+                binding.tvState.text = msg
+            }else{
+                binding.tvState.visibility = View.GONE
+            }
         }
     }
 }

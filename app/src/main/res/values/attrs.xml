@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="NewsCardView">
+        <!-- 标题 -->
+        <attr name="newsTitle" format="string" />
+
+        <!-- 来源 -->
+        <attr name="newsSource" format="string" />
+
+        <!-- 发布时间 -->
+        <attr name="newsTime" format="string" />
+
+        <!-- 本地图片资源 -->
+        <attr name="newsImage" format="reference" />
+
+        <!-- 网络图片地址 -->
+        <attr name="newsImageUrl" format="string" />
+
+    </declare-styleable>
+</resources>

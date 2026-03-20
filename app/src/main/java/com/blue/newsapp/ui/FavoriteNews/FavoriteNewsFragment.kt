@@ -53,7 +53,13 @@ class FavoriteNewsFragment: Fragment() {
 
 
         viewModel.favoriteNewsList.observe(viewLifecycleOwner){ favoriteNewsList ->
-            favoriteNewsAdapter.submitList(favoriteNewsList)
+            if (favoriteNewsList.isNullOrEmpty()){
+                binding.rvFavoriteNews.visibility = View.GONE
+            }else{
+                favoriteNewsAdapter.submitList(favoriteNewsList)
+                binding.tvEmpty.visibility = View.GONE
+                binding.rvFavoriteNews.visibility = View.VISIBLE
+            }
         }
     }
 

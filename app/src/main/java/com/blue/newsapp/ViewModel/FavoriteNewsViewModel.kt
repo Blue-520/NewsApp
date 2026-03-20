@@ -6,16 +6,14 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.switchMap
-import androidx.lifecycle.viewModelScope
 import com.blue.newsapp.data.loacl.database.UserPreferences
 import com.blue.newsapp.data.loacl.entity.FavoriteNewsEntity
-import com.blue.newsapp.repository.NewLocalReposity
+import com.blue.newsapp.repository.NewLocalRepository
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 
 class FavoriteNewsViewModel(application: Application) : AndroidViewModel(application){
 
-   private val reposity = NewLocalReposity.getInstance(application)
+   private val reposity = NewLocalRepository.getInstance(application)
 
    private val userPreferences = UserPreferences(application)
 

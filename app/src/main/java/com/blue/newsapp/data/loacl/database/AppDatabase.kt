@@ -6,19 +6,22 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.blue.newsapp.data.loacl.dao.FavoriteNewsDao
 import com.blue.newsapp.data.loacl.dao.NewsCommentDao
+import com.blue.newsapp.data.loacl.dao.NewsDao
 import com.blue.newsapp.data.loacl.dao.UserDao
 import com.blue.newsapp.data.loacl.entity.FavoriteNewsEntity
 import com.blue.newsapp.data.loacl.entity.NewsCommentEntity
+import com.blue.newsapp.data.loacl.entity.NewsEntity
 import com.blue.newsapp.data.loacl.entity.UserEntity
 import kotlin.concurrent.Volatile
 
-@Database(entities = [NewsCommentEntity::class, FavoriteNewsEntity::class, UserEntity::class], version = 3, exportSchema = false)
+@Database(entities = [NewsCommentEntity::class, FavoriteNewsEntity::class, UserEntity::class, NewsEntity::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun favoriteNewsDao() : FavoriteNewsDao
     abstract fun newsCommentDao(): NewsCommentDao
-
     abstract fun userDao(): UserDao
+    abstract fun newsDao(): NewsDao
+
 
     companion object{
         @Volatile

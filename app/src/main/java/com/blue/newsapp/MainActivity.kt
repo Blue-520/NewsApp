@@ -1,6 +1,7 @@
 package com.blue.newsapp
 
 import android.os.Bundle
+import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -29,6 +30,28 @@ class MainActivity : AppCompatActivity() {
             supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
 
         val navController = navHostFragment.navController
+
+        //让底部导航栏和导航控制器绑定
         binding.botomNav.setupWithNavController(navController)
+
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            when(destination.id){
+                R.id.homeFragment,
+                R.id.mineFragment,
+                R.id.favoriteNewsFragment ->{
+                    binding.botomNav.visibility = View.VISIBLE
+                }
+
+                R.id.newsDetailFragment ->{
+                    binding.botomNav.visibility = View.GONE
+                }
+
+                else -> {
+                    binding.botomNav.visibility = View.GONE
+                }
+            }
+        }
+
+        binding
     }
 }

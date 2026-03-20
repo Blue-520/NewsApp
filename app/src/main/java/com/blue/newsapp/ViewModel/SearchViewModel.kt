@@ -1,17 +1,24 @@
 package com.blue.newsapp.ViewModel
 
+import android.app.Application
+import android.util.Log
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.blue.newsapp.data.model.Article
+import com.blue.newsapp.repository.NewLocalRepository
 import com.blue.newsapp.repository.NewsRepository
 import kotlinx.coroutines.launch
 
-class SearchViewModel: ViewModel() {
+class SearchViewModel(application: Application): AndroidViewModel(application) {
+
+    private val repository = NewLocalRepository.getInstance(application)
+
     // 搜索结果列表
-    private val _searchResult = MutableLiveData<List<Article>>()
-    val searchResult : LiveData<List<Article>> = _searchResult
+    private val _searchResultList = MutableLiveData<List<Article>>()
+    val searchResultList : LiveData<List<Article>> = _searchResultList
 
     // 错误信息
     private val _errorMessage = MutableLiveData<String?>()
@@ -24,27 +31,41 @@ class SearchViewModel: ViewModel() {
     /**
      * 执行搜索
      */
-    fun search(query: String){
+    fun searchNews(query: String){
 
         // 关键词为空时，直接不搜索
         if (query.isBlank()){
+            _searchResultList.value = emptyList()
             _errorMessage.value = "请输入关键词"
             return
         }
 
         viewModelScope.launch {
             _loading.value = true
+            _errorMessage.value = ""
 
-            val result = NewsRepository.getSearch(query)
-
-            result.onSuccess { articles ->
-                _searchResult.value = articles
-                _errorMessage.value = null
-            }.onFailure { throwable ->
-                _errorMessage.value = throwable.message ?: "搜索失败"
+            try {
+                val result = NewsRepository.getSearch(query)
+                result.onSuccess { articles ->
+                    _searchResultList.value = articles
+                    _errorMessage.value = null
+                }.onFailure { throwable ->
+                    _searchResultList.value = emptyList()
+                    _errorMessage.value = throwable.message ?: "搜索失败"
+                }
+            }catch (e: Exception){
+                e.printStackTrace()
+                Log.d("aaa", "${e.message}")
+                _errorMessage.value = e.message ?: "搜索失败"
+            }finally {
+                _loading.value = false
             }
+        }
+    }
 
-            _loading.value = false
+    fun saveNews(news: Article, catrgory: String){
+        viewModelScope.launch {
+            repository.saveNews(news, catrgory)
         }
     }
 }

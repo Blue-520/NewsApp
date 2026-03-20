@@ -53,6 +53,7 @@ class NewsDetailFragment: Fragment() {
         val publishedAt = args.publishedAt
         val description = args.description
         val url = args.url
+        val category = args.category
 
 
         // 初始化评论列表
@@ -122,6 +123,9 @@ class NewsDetailFragment: Fragment() {
                 if (currentFavorite == null){
                     viewModel.addFavorite( title = title, imageUrl = imageUrl, sourceName = sourceName, publishedAt = publishedAt, description = description, url = url)
                     Toast.makeText(requireContext(), "收藏成功", Toast.LENGTH_SHORT).show()
+
+                    //加分
+                    viewModel.increaseScore(category)
                 }else{
                     viewModel.removeFavorite(url)
                     Toast.makeText(requireContext(), "已取消收藏", Toast.LENGTH_SHORT).show()

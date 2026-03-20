@@ -1,8 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+
     <style name="Base.Theme.Newsapp" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <!-- 主色 -->
+        <item name="colorPrimary">@color/primary_blue</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
+
+        <!-- 次级强调色 -->
+        <item name="colorSecondary">@color/primary_blue_dark</item>
+
+        <!-- 页面背景 -->
+        <item name="android:windowBackground">@color/app_bg</item>
+
+        <!-- Material 组件常用表面色 -->
+        <item name="colorSurface">@color/surface_bg</item>
+        <item name="colorOnSurface">@color/text_primary</item>
     </style>
 
     <style name="Theme.Newsapp" parent="Base.Theme.Newsapp" />

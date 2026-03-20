@@ -24,11 +24,14 @@
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/botom_nav"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="62dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:menu="@menu/bottom_nav_menu"
+        app:itemActiveIndicatorStyle="@null"
+        android:background="@color/white"
+        app:labelVisibilityMode="unlabeled"
         />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

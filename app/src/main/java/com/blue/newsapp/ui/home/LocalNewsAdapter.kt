@@ -6,15 +6,14 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.blue.newsapp.data.model.Article
+import com.blue.newsapp.data.loacl.entity.NewsEntity
 import com.blue.newsapp.databinding.ItemNewsBinding
 import com.bumptech.glide.Glide
 
-class NewsAdapter(private val onItemClick : (Article) -> Unit): ListAdapter<Article, NewsAdapter.ViewHolder>(DiffCallBack()) {
+class LocalNewsAdapter(private val onItemClick : (NewsEntity) -> Unit): ListAdapter<NewsEntity, LocalNewsAdapter.ViewHolder>(DiffCallBack()) {
     class ViewHolder(val binding: ItemNewsBinding) : RecyclerView.ViewHolder(binding.root){
-
-        fun bind(news: Article, onItemClick: (Article) -> Unit){
-            binding.newsCardView.bind(title = news.title, source = news.source.name, time = news.publishedAt ?: "", imageUrl = news.urlToImage)
+        fun bind(news: NewsEntity, onItemClick: (NewsEntity) -> Unit){
+            binding.newsCardView.bind(title = news.title, source = news.name, time = news.publishedAt ?: "", imageUrl = news.urlToImage)
 
             binding.root.setOnClickListener {
                 onItemClick(news)
@@ -34,22 +33,21 @@ class NewsAdapter(private val onItemClick : (Article) -> Unit): ListAdapter<Arti
         holder: ViewHolder,
         position: Int
     ) {
-        val article = getItem(position)
-
-        holder.bind(article, onItemClick)
+        val news = getItem(position)
+        holder.bind(news, onItemClick)
     }
 
-    class DiffCallBack: DiffUtil.ItemCallback<Article>(){
+    class DiffCallBack: DiffUtil.ItemCallback<NewsEntity>(){
         override fun areItemsTheSame(
-            oldItem: Article,
-            newItem: Article
+            oldItem: NewsEntity,
+            newItem: NewsEntity
         ): Boolean {
             return oldItem.url == newItem.url
         }
 
         override fun areContentsTheSame(
-            oldItem: Article,
-            newItem: Article
+            oldItem: NewsEntity,
+            newItem: NewsEntity
         ): Boolean {
             return oldItem == newItem
         }

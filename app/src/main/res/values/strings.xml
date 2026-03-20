@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Newsapp</string>
+    <string name="tab_home">首页</string>
+    <string name="tab_nownews">时事热点</string>
 </resources>

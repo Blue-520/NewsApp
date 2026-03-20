@@ -14,22 +14,22 @@ interface NewsService{
         country: String = "us",
 
         @Query("pageSize")              // 每页条数，先给 20 条
-        pageSize: Int = 20,
+        pageSize: Int = 100,
 
         @Query("apiKey")
-        apiKey: String
+        apiKey: String,
+
+        @Query("category")
+        category: String?,
 
     ): NewsResponse
 
 
-    @GET("everything")
+    @GET("v2/everything")
     suspend fun searchNews(
 
         @Query("q")
         q: String,
-
-        @Query("language")
-        language: String = "zh",
 
         @Query("sortBy")
         sortBy: String = "publishedAt",

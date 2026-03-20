@@ -17,6 +17,9 @@
         <action
             android:id="@+id/action_homeFragment_to_mineFragment"
             app:destination="@id/mineFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_searchFragment"
+            app:destination="@id/searchFragment" />
     </fragment>
 
     <fragment
@@ -58,6 +61,12 @@
             android:name="url"
             app:argType="string"
             android:defaultValue="" />
+
+        <!-- 类型 -->
+        <argument
+            android:name="category"
+            app:argType="string"
+            android:defaultValue="general"/>
 
         <action
             android:id="@+id/action_newsDetailFragment_to_newsWebFragment"

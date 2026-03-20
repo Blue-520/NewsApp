@@ -6,11 +6,12 @@ import com.blue.newsapp.data.network.NetworkModule
 object NewsRepository{
 
     // 这里先简单返回新闻列表
-    suspend fun getTopHeadlines(apiKey: String): List<Article>{
+    suspend fun getTopHeadlines(apiKey: String, requireCategory: String? = null): List<Article>{
         val response = NetworkModule.newsService.getNews(
             "us",
             20,
-            apiKey = apiKey
+            apiKey = apiKey,
+            category = requireCategory
         )
 
         // 如果接口成功，直接返回 articles

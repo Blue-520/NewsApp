@@ -11,5 +11,14 @@ data class UserEntity(
 
     val username: String,
 
-    val password: String
+    val password: String,
+
+    // ===== 兴趣分数 =====
+    val businessScore: Int = 0,
+    val entertainmentScore: Int = 0,
+    val healthScore: Int = 0,
+    val scienceScore: Int = 0,
+    val sportsScore: Int = 0,
+    val technologyScore: Int = 0,
+    val generalScore: Int = 0
 )
