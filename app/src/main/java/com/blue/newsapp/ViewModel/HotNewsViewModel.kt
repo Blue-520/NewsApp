@@ -5,12 +5,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.blue.newsapp.data.loacl.database.UserPreferences
 import com.blue.newsapp.data.model.Article
 import com.blue.newsapp.data.network.NewsConstants
 import com.blue.newsapp.repository.NewLocalRepository
 import com.blue.newsapp.repository.NewsRepository
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class HotNewsViewModel(application: Application) : AndroidViewModel(application){
@@ -57,7 +55,7 @@ class HotNewsViewModel(application: Application) : AndroidViewModel(application)
 
             }catch (e: Exception){
                 e.printStackTrace()
-                _errorMessage.value = "新闻加载失败：${e.message}"
+                _errorMessage.value = "新闻加载失败，请检查网络"
             }finally {
                 _loading.value = false
             }

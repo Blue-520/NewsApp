@@ -1,5 +1,6 @@
 package com.blue.newsapp.data.loacl.dao
 
+import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
@@ -32,6 +33,9 @@ interface UserDao{
      */
     @Query("select * from users where id = :userId limit 1")
     suspend fun getUserById(userId: Long): UserEntity?
+
+    @Query("select * from users where id = :userId limit 1")
+    fun observeUserById(userId: Long): LiveData<UserEntity?>
 
     /**
      * business 兴趣分数
@@ -74,4 +78,16 @@ interface UserDao{
      */
     @Query("update users set generalScore = generalScore + :delta where id = :userId")
     suspend fun increaseGeneralScore(userId: Long, delta: Int)
+
+    @Query("update users set username = :username where id = :userId")
+    suspend fun updateUsername(userId: Long, username: String)
+
+    @Query("update users set signature = :signature where id = :userId")
+    suspend fun updateSignature(userId: Long, signature: String)
+
+    @Query("update users set avatar = :avatar where id = :userId")
+    suspend fun updateAvatar(userId: Long, avatar: String)
+
+    @Query("update users set backgroundImage = :backgroundImage where id = :userId")
+    suspend fun updateBackgroundImage(userId: Long, backgroundImage: String)
 }

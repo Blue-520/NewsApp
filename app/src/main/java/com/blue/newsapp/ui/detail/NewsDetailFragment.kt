@@ -6,7 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -15,7 +14,6 @@ import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.blue.newsapp.R
 import com.blue.newsapp.ViewModel.NewsDetailViewModel
-import com.blue.newsapp.data.loacl.entity.FavoriteNewsEntity
 import com.blue.newsapp.databinding.FragmentNewsDetailBinding
 import com.bumptech.glide.Glide
 import kotlinx.coroutines.launch
@@ -64,8 +62,6 @@ class NewsDetailFragment: Fragment() {
         // 告诉 ViewModel 当前是哪条新闻
         viewModel.setNewsUrl(url)
 
-        // 告诉 ViewModel 当前是哪个用户
-        viewModel.loadCurrentUserId()
 
         // 设置标题
         binding.detailTitle.text = title

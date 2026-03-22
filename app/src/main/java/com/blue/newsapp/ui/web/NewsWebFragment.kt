@@ -64,14 +64,14 @@ class NewsWebFragment: Fragment() {
             }
 
             // 网页开始加载，显示进度条
-            override fun onPageStarted(
+/*            override fun onPageStarted(
                 view: WebView?,
                 url: String?,
                 favicon: Bitmap?
             ) {
                 super.onPageStarted(view, url, favicon)
                 binding.progressBar.visibility = View.VISIBLE
-            }
+            }*/
 
             /*// 网页加载完成，隐藏进度条
             override fun onPageFinished(view: WebView?, url: String?) {
@@ -87,7 +87,7 @@ class NewsWebFragment: Fragment() {
             ) {
                 super.onReceivedError(view, request, error)
                 binding.progressBar.visibility = View.GONE
-                Toast.makeText(requireContext(), "网页打开失败", Toast.LENGTH_SHORT)
+                Toast.makeText(requireContext(), "网页打开失败", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -122,12 +122,8 @@ class NewsWebFragment: Fragment() {
             Toast.makeText(requireContext(), "网页地址无效", Toast.LENGTH_SHORT).show()
         }
 
-        // 处理系统返回键：
-        // 如果网页可以后退，就先在网页里后退
-        // 否则再退出当前 Fragment
-        requireActivity().onBackPressedDispatcher.addCallback(
-            viewLifecycleOwner,
-            object : OnBackPressedCallback(true){
+        // 处理系统返回键：如果网页可以后退，就先在网页里后退，否则再退出当前 Fragment
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true){
                 override fun handleOnBackPressed() {
                     if (binding.webView.canGoBack()){
                         binding.webView.goBack()

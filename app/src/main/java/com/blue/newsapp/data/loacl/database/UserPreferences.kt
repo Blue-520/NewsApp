@@ -64,4 +64,10 @@ class UserPreferences(context: Context) {
             preferences[KEY_USERNAME] = ""
         }
     }
+
+    suspend fun updateUsername(username: String) {
+        appContext.dataStore.edit { preferences ->
+            preferences[KEY_USERNAME] = username
+        }
+    }
 }

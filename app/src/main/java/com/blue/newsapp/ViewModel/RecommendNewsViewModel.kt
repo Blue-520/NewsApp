@@ -9,7 +9,6 @@ import androidx.lifecycle.viewModelScope
 import com.blue.newsapp.data.loacl.database.UserPreferences
 import com.blue.newsapp.data.loacl.entity.NewsEntity
 import com.blue.newsapp.repository.NewLocalRepository
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class RecommendNewsViewModel(application: Application) : AndroidViewModel(application){
@@ -72,7 +71,7 @@ class RecommendNewsViewModel(application: Application) : AndroidViewModel(applic
     //加分
     fun increaseScore(category: String){
         viewModelScope.launch {
-            currentUserId.value = userPreferences.userIdFlow.first()
+            //currentUserId.value = userPreferences.userIdFlow.first()
             repository.increaseUserInterestScore(currentUserId.value ?: -1, category, 1)
         }
     }

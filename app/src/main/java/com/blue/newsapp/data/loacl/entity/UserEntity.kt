@@ -13,6 +13,12 @@ data class UserEntity(
 
     val password: String,
 
+    val avatar: String = "",
+
+    val backgroundImage: String = "",
+
+    val signature: String = "这个人很懒，但会认真读每一条新闻",
+
     // ===== 兴趣分数 =====
     val businessScore: Int = 0,
     val entertainmentScore: Int = 0,

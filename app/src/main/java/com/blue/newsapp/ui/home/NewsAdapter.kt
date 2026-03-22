@@ -1,6 +1,5 @@
 package com.blue.newsapp.ui.home
 
-import com.blue.newsapp.R
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
@@ -8,7 +7,6 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.blue.newsapp.data.model.Article
 import com.blue.newsapp.databinding.ItemNewsBinding
-import com.bumptech.glide.Glide
 
 class NewsAdapter(private val onItemClick : (Article) -> Unit): ListAdapter<Article, NewsAdapter.ViewHolder>(DiffCallBack()) {
     class ViewHolder(val binding: ItemNewsBinding) : RecyclerView.ViewHolder(binding.root){

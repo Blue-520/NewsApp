@@ -4,14 +4,12 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.blue.newsapp.ViewModel.SearchViewModel
 import com.blue.newsapp.databinding.FragmentSearchBinding
-import com.blue.newsapp.ui.home.HomeFragmentDirections
 import com.blue.newsapp.ui.home.NewsAdapter
 
 
@@ -72,6 +70,7 @@ class SearchFragment: Fragment() {
             doSearch()
         }
 
+        //键盘的搜索也可以直接用
         binding.etSearch.setOnEditorActionListener { _, _, _ ->
             doSearch()
             true

@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.asLiveData
 import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
 import com.blue.newsapp.data.loacl.database.UserPreferences
@@ -26,48 +27,63 @@ class NewsDetailViewModel(application: Application): AndroidViewModel(applicatio
     private val currentUserId = MutableLiveData<Long>()
 
     // 当前新闻的收藏状态（和当前登录用户绑定）
-    val favoriteNews: LiveData<FavoriteNewsEntity?> = MediatorLiveData<FavoriteNewsEntity?>().apply {
-        var tempUserId: Long? = null
-        var tempUrl: String? =null
-        var favoriteSource: LiveData<FavoriteNewsEntity?>? = null
+    private val _favoriteNews = MediatorLiveData<FavoriteNewsEntity?>()
+    val favoriteNews: LiveData<FavoriteNewsEntity?> = _favoriteNews
 
-        fun updateSource(){
-            val userId = tempUserId
-            val url = tempUrl
+    private var favoriteSource: LiveData<FavoriteNewsEntity?>? = null
 
-            // 未登录，或者 url 为空，就视为未收藏
-            if (userId == null || userId == -1L || url.isNullOrEmpty()){
-                favoriteSource?.let { removeSource(it) }
-                favoriteSource= null
-                value = null
-                return
-            }
-
-            favoriteSource?.let { removeSource(it) }
-
-            favoriteSource= repository.getFavoriteNewsByUserIdAndUrl(userId, url)
-            favoriteSource?.let { source ->
-                addSource(source) { favorite ->
-                    value = favorite
-                }
+    init {
+        viewModelScope.launch {
+            userPreFerences.userIdFlow.collect { userId ->
+                currentUserId.value = userId
             }
         }
 
-        addSource(currentUserId){ userId ->
-            tempUserId = userId
-            updateSource()
+        _favoriteNews.addSource(currentUserId) { userId ->
+            refreshFavoriteSource()
         }
 
-        addSource(currentNewsUrl){ url ->
-            tempUrl = url
-            updateSource()
+        _favoriteNews.addSource(currentNewsUrl) { url ->
+            refreshFavoriteSource()
+        }
+    }
+
+    /**
+     * 根据当前 userId 和 newsUrl 重新切换收藏数据源
+     */
+    private fun refreshFavoriteSource() {
+        val userId = currentUserId.value
+        val newsUrl = currentNewsUrl.value
+
+        // 先移除旧数据源
+        favoriteSource?.let {
+            _favoriteNews.removeSource(it)
+            favoriteSource = null
+        }
+
+        // 未登录 or url 为空，直接视为未收藏
+        if (userId == null || userId == -1L || newsUrl.isNullOrEmpty()) {
+            _favoriteNews.value = null
+            return
+        }
+
+        // 切换到新的查询结果
+        favoriteSource = repository.getFavoriteNewsByUserIdAndUrl(userId, newsUrl)
+        favoriteSource?.let { source ->
+            _favoriteNews.addSource(source) { favorite ->
+                _favoriteNews.value = favorite
+            }
         }
     }
 
     //给兴趣加分
     fun increaseScore(category: String){
         viewModelScope.launch {
-            repository.increaseUserInterestScore(currentUserId.value ?: -1, category, 2)
+            val userId = userPreFerences.userIdFlow.first()
+
+            if (userId == -1L) return@launch
+
+            repository.increaseUserInterestScore(userId, category, 2)
         }
     }
 
@@ -88,14 +104,6 @@ class NewsDetailViewModel(application: Application): AndroidViewModel(applicatio
         }
     }
 
-    /**
-     * 读取当前登录用户 id
-     */
-    fun loadCurrentUserId(){
-        viewModelScope.launch {
-            currentUserId.value = userPreFerences.userIdFlow.first()
-        }
-    }
 
     /**
      * 添加收藏

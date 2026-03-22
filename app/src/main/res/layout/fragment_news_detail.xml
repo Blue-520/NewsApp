@@ -98,7 +98,7 @@
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:padding="8dp"
                         android:scaleType="centerInside"
-                        android:src="@drawable/not_star" />
+                        android:src="@drawable/favorite" />
                 </LinearLayout>
 
                 <View

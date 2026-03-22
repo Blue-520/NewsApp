@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.blue.newsapp.R
@@ -16,8 +15,6 @@ class HomeFragment: Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var pagerAdapter: HomePagerAdapter
-
-    private val adapter = HomeFragmentDirections
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -32,7 +29,6 @@ class HomeFragment: Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         initViewPager()
-        initSearchBar()
 
         binding.searchBar.setOnClickListener {
             findNavController().navigate(R.id.action_homeFragment_to_searchFragment)
@@ -54,12 +50,5 @@ class HomeFragment: Fragment() {
                 1 -> tab.text = "时事热点"
             }
         }.attach()
-    }
-
-    private fun initSearchBar(){
-        binding.searchBar.setOnClickListener {
-            //findNavController().navigate(R.id.action_homeFragment_to_searchFragment)
-            Toast.makeText(requireContext(), "大家好", Toast.LENGTH_SHORT).show()
-        }
     }
 }

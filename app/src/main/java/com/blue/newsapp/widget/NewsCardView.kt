@@ -8,6 +8,9 @@ import androidx.core.content.ContextCompat
 import com.blue.newsapp.R
 import com.blue.newsapp.databinding.ViewNewsCardBinding
 import com.bumptech.glide.Glide
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 class NewsCardView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defstyleAttr: Int = 0)
     : FrameLayout(context, attrs, defstyleAttr) {
@@ -56,7 +59,7 @@ class NewsCardView @JvmOverloads constructor(context: Context, attrs: AttributeS
      * 设置发布时间
      */
     fun setTime(time: String){
-        binding.tvNewsTime.text = time
+        binding.tvNewsTime.text = formatApiTime(time)
     }
 
     /**
@@ -101,6 +104,25 @@ class NewsCardView @JvmOverloads constructor(context: Context, attrs: AttributeS
             setPlaceholder()
         } else {
             setImageUrl(imageUrl)
+        }
+    }
+
+    /**
+     * 将接口的String时间改为标准格式
+     */
+    private fun formatApiTime(timeStr: String?): String {
+        if (timeStr.isNullOrBlank()) return ""
+
+        return try {
+            val inputSdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
+            inputSdf.timeZone = TimeZone.getTimeZone("UTC")
+
+            val outputSdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+            val date = inputSdf.parse(timeStr)
+
+            if (date != null) outputSdf.format(date) else ""
+        } catch (e: Exception) {
+            timeStr
         }
     }
 }

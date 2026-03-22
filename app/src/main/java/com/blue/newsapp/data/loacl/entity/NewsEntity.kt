@@ -1,6 +1,5 @@
 package com.blue.newsapp.data.loacl.entity
 
-import Source
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 

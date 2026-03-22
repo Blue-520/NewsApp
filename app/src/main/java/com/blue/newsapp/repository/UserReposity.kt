@@ -1,5 +1,6 @@
 package com.blue.newsapp.repository
 
+import androidx.lifecycle.LiveData
 import com.blue.newsapp.data.loacl.dao.UserDao
 import com.blue.newsapp.data.loacl.entity.UserEntity
 
@@ -31,5 +32,34 @@ class UserReposity(private val userDao: UserDao) {
      */
     suspend fun login(username: String, password: String): UserEntity?{
         return userDao.login(username, password)
+    }
+
+    suspend fun getUserById(userId: Long): UserEntity?{
+        return userDao.getUserById(userId)
+    }
+
+    fun observeUserById(userId: Long): LiveData<UserEntity?>{
+        return userDao.observeUserById(userId)
+    }
+
+    suspend fun updateUsername(userId: Long, username: String): Pair<Boolean, String>{
+        val existUser = userDao.getUserByUsername(username)
+        if (existUser != null && existUser.id != userId){
+            return Pair(false, "用户名已存在")
+        }
+        userDao.updateUsername(userId, username)
+        return Pair(true, "用户名已更新")
+    }
+
+    suspend fun updateSignature(userId: Long, signature: String){
+        userDao.updateSignature(userId, signature)
+    }
+
+    suspend fun updateAvatar(userId: Long, avatar: String){
+        userDao.updateAvatar(userId, avatar)
+    }
+
+    suspend fun updateBackgroundImage(userId: Long, backgroundImage: String){
+        userDao.updateBackgroundImage(userId, backgroundImage)
     }
 }

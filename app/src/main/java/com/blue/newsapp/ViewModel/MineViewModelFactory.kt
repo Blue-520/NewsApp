@@ -20,7 +20,10 @@ class MineViewModelFactory(private val userRepository: UserReposity? = null, pri
             }
 
             modelClass.isAssignableFrom(MineViewModel::class.java) -> {
-                MineViewModel(userPreference ?: throw IllegalArgumentException("userPreference 不能为空")) as T
+                MineViewModel(
+                    userRepository ?: throw IllegalArgumentException("userReposity 不能为空"),
+                    userPreference ?: throw IllegalArgumentException("userPreference 不能为空")
+                ) as T
             }
 
             else -> throw IllegalArgumentException("未知的ViewModel类型")
