@@ -7,19 +7,19 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.blue.newsapp.R
-import com.blue.newsapp.data.loacl.entity.FavoriteNewsEntity
+import com.blue.newsapp.data.remote.model.response.FavoriteNewsResponse
 import com.blue.newsapp.databinding.ItemFavoriteNewsBinding
 import com.bumptech.glide.Glide
 
-class FavoriteNewsAdapter(private val OnItemClick:(FavoriteNewsEntity) -> Unit): ListAdapter<FavoriteNewsEntity, FavoriteNewsAdapter.ViewHolder>(DiffCallBack()) {
+class FavoriteNewsAdapter(private val onItemClick:(FavoriteNewsResponse) -> Unit): ListAdapter<FavoriteNewsResponse, FavoriteNewsAdapter.ViewHolder>(DiffCallBack()) {
 
     class ViewHolder(val binding: ItemFavoriteNewsBinding) : RecyclerView.ViewHolder(binding.root){
-        fun bind(item: FavoriteNewsEntity, onItemClick:(FavoriteNewsEntity) -> Unit){
+        fun bind(item: FavoriteNewsResponse, onItemClick:(FavoriteNewsResponse) -> Unit){
             binding.tvNewsTitle.text = item.title
             binding.tvNewsSource.text = "来源：${item.sourceName}"
             binding.tvPublishedAt.text = "发布时间：${item.publishedAt}"
 
-            if (item.imageUrl.isEmpty()){
+            if (item.imageUrl.isNullOrEmpty()){
                 binding.ivNewsImage.setImageResource(R.drawable.img_error)
             }else{
                 Glide.with(binding.root.context)
@@ -49,20 +49,20 @@ class FavoriteNewsAdapter(private val OnItemClick:(FavoriteNewsEntity) -> Unit):
         position: Int
     ) {
         val item = getItem(position)
-        holder.bind(item, OnItemClick)
+        holder.bind(item, onItemClick)
     }
 
-    class DiffCallBack: DiffUtil.ItemCallback<FavoriteNewsEntity>(){
+    class DiffCallBack: DiffUtil.ItemCallback<FavoriteNewsResponse>(){
         override fun areItemsTheSame(
-            oldItem: FavoriteNewsEntity,
-            newItem: FavoriteNewsEntity
+            oldItem: FavoriteNewsResponse,
+            newItem: FavoriteNewsResponse
         ): Boolean {
             return oldItem.url == newItem.url
         }
 
         override fun areContentsTheSame(
-            oldItem: FavoriteNewsEntity,
-            newItem: FavoriteNewsEntity
+            oldItem: FavoriteNewsResponse,
+            newItem: FavoriteNewsResponse
         ): Boolean {
             return oldItem == newItem
         }

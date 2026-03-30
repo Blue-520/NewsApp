@@ -9,9 +9,13 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.blue.newsapp.ViewModel.FavoriteNewsViewModel
+import com.blue.newsapp.data.remote.model.response.FavoriteNewsResponse
 import com.blue.newsapp.databinding.FragmentFavoriteNewsBinding
+import com.blue.newsapp.ui.UiState
+import dagger.hilt.android.AndroidEntryPoint
 
 
+@AndroidEntryPoint
 class FavoriteNewsFragment: Fragment() {
 
     private var _binding : FragmentFavoriteNewsBinding? = null
@@ -37,34 +41,61 @@ class FavoriteNewsFragment: Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        favoriteNewsAdapter = FavoriteNewsAdapter{ favoriteNewsEntity ->
+        favoriteNewsAdapter = FavoriteNewsAdapter{ favoriteNews ->
             val action = FavoriteNewsFragmentDirections.actionFavoriteNewsFragmentToNewsDetailFragment(
-                title = favoriteNewsEntity.title,
-                imageUrl = favoriteNewsEntity.imageUrl,
-                sourceName = favoriteNewsEntity.sourceName,
-                publishedAt = favoriteNewsEntity.publishedAt,
-                description = favoriteNewsEntity.description,
-                url = favoriteNewsEntity.url
+                title = favoriteNews.title,
+                imageUrl = favoriteNews.imageUrl,
+                sourceName = favoriteNews.sourceName,
+                publishedAt = favoriteNews.publishedAt,
+                description = favoriteNews.description,
+                url = favoriteNews.url
             )
             navController.navigate(action)
         }
         binding.rvFavoriteNews.adapter = favoriteNewsAdapter
         binding.rvFavoriteNews.layoutManager = LinearLayoutManager(requireContext())
 
+        observeUiState()
 
-        viewModel.favoriteNewsList.observe(viewLifecycleOwner){ favoriteNewsList ->
-            if (favoriteNewsList.isNullOrEmpty()){
-                binding.rvFavoriteNews.visibility = View.GONE
-            }else{
-                favoriteNewsAdapter.submitList(favoriteNewsList)
-                binding.tvEmpty.visibility = View.GONE
-                binding.rvFavoriteNews.visibility = View.VISIBLE
-            }
-        }
+        viewModel.loadFavorites()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.loadFavorites()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private fun observeUiState(){
+        viewModel.uiState.observe(viewLifecycleOwner){ uiState ->
+            when(uiState){
+                is UiState.Loading ->{
+                    binding.tvEmpty.visibility = View.GONE
+                    binding.rvFavoriteNews.visibility = View.GONE
+                }
+
+                is UiState.Empty -> {
+                    binding.tvEmpty.text = uiState.message
+                    binding.tvEmpty.visibility = View.VISIBLE
+                    binding.rvFavoriteNews.visibility = View.GONE
+                }
+
+                is UiState.Success -> {
+                    favoriteNewsAdapter.submitList(uiState.data)
+                    binding.tvEmpty.visibility = View.GONE
+                    binding.rvFavoriteNews.visibility = View.VISIBLE
+                }
+
+                is UiState.Error -> {
+                    binding.tvEmpty.text = uiState.message
+                    binding.tvEmpty.visibility = View.VISIBLE
+                    binding.rvFavoriteNews.visibility = View.GONE
+                }
+            }
+        }
     }
 }

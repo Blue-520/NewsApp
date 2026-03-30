@@ -11,25 +11,28 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.blue.newsapp.R
 import com.blue.newsapp.ViewModel.MineViewModel
-import com.blue.newsapp.ViewModel.MineViewModelFactory
+import com.blue.newsapp.ViewModel.AuthViewModelFactory
 import com.blue.newsapp.data.loacl.database.AppDatabase
-import com.blue.newsapp.data.loacl.database.UserPreferences
+import com.blue.newsapp.data.loacl.database.SessionManager
 import com.blue.newsapp.data.loacl.entity.UserEntity
 import com.blue.newsapp.databinding.FragmentMineBinding
 import com.blue.newsapp.repository.UserReposity
+import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 import java.io.FileOutputStream
 
+@AndroidEntryPoint
 class MineFragment: Fragment() {
     private var _binding : FragmentMineBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var viewModel: MineViewModel
+    private val viewModel: MineViewModel by viewModels()
 
     private enum class ImageTarget {
         AVATAR,
@@ -70,16 +73,6 @@ class MineFragment: Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        // 1. 创建 UserPreferences
-        val userPreference = UserPreferences(requireContext())
-
-        val userDao = AppDatabase.getDatabase(requireContext()).userDao()
-        val userRepository = UserReposity(userDao)
-
-        // 2. 创建 ViewModel
-        val factory = MineViewModelFactory(userRepository = userRepository, userPreference = userPreference)
-        viewModel = ViewModelProvider(this, factory)[MineViewModel::class.java]
 
         // 去登录
         binding.btnGoLogin.setOnClickListener {

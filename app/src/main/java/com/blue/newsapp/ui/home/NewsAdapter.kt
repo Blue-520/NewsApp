@@ -2,13 +2,14 @@ package com.blue.newsapp.ui.home
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.blue.newsapp.data.model.Article
 import com.blue.newsapp.databinding.ItemNewsBinding
 
-class NewsAdapter(private val onItemClick : (Article) -> Unit): ListAdapter<Article, NewsAdapter.ViewHolder>(DiffCallBack()) {
+class NewsAdapter(private val onItemClick : (Article) -> Unit): PagingDataAdapter<Article, NewsAdapter.ViewHolder>(DiffCallBack()) {
     class ViewHolder(val binding: ItemNewsBinding) : RecyclerView.ViewHolder(binding.root){
 
         fun bind(news: Article, onItemClick: (Article) -> Unit){
@@ -32,7 +33,7 @@ class NewsAdapter(private val onItemClick : (Article) -> Unit): ListAdapter<Arti
         holder: ViewHolder,
         position: Int
     ) {
-        val article = getItem(position)
+        val article = getItem(position) ?: return
 
         holder.bind(article, onItemClick)
     }

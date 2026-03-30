@@ -11,7 +11,10 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.blue.newsapp.ViewModel.RecommendNewsViewModel
 import com.blue.newsapp.databinding.FragmentRecommendNewsBinding
+import com.blue.newsapp.ui.UiState
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class RecommendNewsFragment : Fragment(){
 
     private var _binding : FragmentRecommendNewsBinding? = null
@@ -44,22 +47,32 @@ class RecommendNewsFragment : Fragment(){
         binding.newsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.newsRecyclerView.adapter = newsAdapter
 
-        viewModel.newsList.observe(viewLifecycleOwner){ List ->
-            newsAdapter.submitList(List)
-        }
 
-        viewModel.loading.observe(viewLifecycleOwner){ isLoading ->
-            binding.swipeRefresh.isRefreshing = isLoading
-        }
+        viewModel.uiState.observe(viewLifecycleOwner){ state ->
+            when(state){
+                UiState.Loading -> {
+                    binding.swipeRefresh.isRefreshing = true
+                }
 
-        viewModel.errorMessage.observe(viewLifecycleOwner){ msg ->
-            if (!msg.isNullOrEmpty()){
-                Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+                is UiState.Empty -> {
+                    binding.swipeRefresh.isRefreshing = false
+                    Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
+                }
+
+                is UiState.Success -> {
+                    binding.swipeRefresh.isRefreshing = false
+                    newsAdapter.submitList(state.data)
+                }
+
+                is UiState.Error -> {
+                    binding.swipeRefresh.isRefreshing = false
+                    Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
         binding.swipeRefresh.setOnRefreshListener {
-            viewModel.loadRecommendNews()
+            viewModel.loadNews()
         }
     }
 
@@ -68,7 +81,7 @@ class RecommendNewsFragment : Fragment(){
         _binding = null
     }
 
-    fun increaseIntersetSource(category: String){
+    private fun increaseIntersetSource(category: String){
         viewModel.increaseScore(category)
     }
 }

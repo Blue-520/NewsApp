@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     id("org.jetbrains.kotlin.kapt")
     id("kotlin-parcelize")
+    alias(libs.plugins.hilt.android)
     id("androidx.navigation.safeargs.kotlin") version "2.7.7"
 }
 
@@ -22,9 +23,23 @@ android {
 
     buildFeatures{
         viewBinding = true
+        buildConfig = true
+    }
+
+    signingConfigs {
+        create("projectDebug") {
+            storeFile = file("$rootDir/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
     }
 
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("projectDebug")
+        }
+
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -76,6 +91,15 @@ dependencies {
     implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
     implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
 
+    // Paging 3 核心依赖（包含 PagingSource）
+    implementation("androidx.paging:paging-runtime-ktx:3.3.2")
+    // 可选：如果需要结合 Room 数据库分页
+    implementation("androidx.room:room-paging:2.8.4")
+
+    // Hilt
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
+
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
     implementation(libs.androidx.room.runtime)
@@ -90,4 +114,8 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+}
+
+kapt {
+    correctErrorTypes = true
 }

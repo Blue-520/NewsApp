@@ -1,32 +1,38 @@
 package com.blue.newsapp.repository
 
 import android.content.Context
-import com.blue.newsapp.data.loacl.database.AppDatabase
+import com.blue.newsapp.data.loacl.dao.FavoriteNewsDao
+import com.blue.newsapp.data.loacl.dao.NewsCommentDao
+import com.blue.newsapp.data.loacl.dao.NewsDao
+import com.blue.newsapp.data.loacl.dao.UserDao
 import com.blue.newsapp.data.loacl.entity.FavoriteNewsEntity
 import com.blue.newsapp.data.loacl.entity.NewsCommentEntity
 import com.blue.newsapp.data.loacl.entity.NewsEntity
 import com.blue.newsapp.data.model.Article
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import kotlin.concurrent.Volatile
 
-class NewLocalRepository private constructor(context: Context){
 
-    private val favoriteDao = AppDatabase.getDatabase(context).favoriteNewsDao()
-    private val newsCommentDao = AppDatabase.getDatabase(context).newsCommentDao()
-    private var newsDao = AppDatabase.getDatabase(context).newsDao()
-    private val userDoa = AppDatabase.getDatabase(context).userDao()
+@Singleton
+class NewLocalRepository @Inject constructor(
+    private val favoriteNewsDao: FavoriteNewsDao,
+    private val newsCommentDao: NewsCommentDao,
+    private val newsDao: NewsDao,
+    private val userDao: UserDao){
 
     // ==================== 收藏 ====================
 
-    fun getFavoriteNewsByUserIdAndUrl(userId: Long, url: String) = favoriteDao.getFavoriteNewsUserIdAndUrl(userId, url)
+    fun getFavoriteNewsByUserIdAndUrl(userId: Long, url: String) = favoriteNewsDao.getFavoriteNewsUserIdAndUrl(userId, url)
 
-    fun getAllFavoriteNewsByUserId(userId: Long) = favoriteDao.getAllFavoriteNewsByUserId(userId)
+    fun getAllFavoriteNewsByUserId(userId: Long) = favoriteNewsDao.getAllFavoriteNewsByUserId(userId)
 
     suspend fun insertFavorite(news: FavoriteNewsEntity){
-        favoriteDao.insertFavorite(news)
+        favoriteNewsDao.insertFavorite(news)
     }
 
     suspend fun deleteFavoriteByUserIdAndUrl(userId: Long, url: String){
-        favoriteDao.deleteFavoriteByUserIdAndUrl(userId, url)
+        favoriteNewsDao.deleteFavoriteByUserIdAndUrl(userId, url)
     }
 
     // ==================== 评论 ====================
@@ -78,13 +84,13 @@ class NewLocalRepository private constructor(context: Context){
     //兴趣加分
     suspend fun increaseUserInterestScore(userId: Long, category: String, delta: Int) {
         when (category) {
-            "business" -> userDoa.increaseBusinessScore(userId, delta)
-            "entertainment" -> userDoa.increaseEntertainmentScore(userId, delta)
-            "health" -> userDoa.increaseHealthScore(userId, delta)
-            "science" -> userDoa.increaseScienceScore(userId, delta)
-            "sports" -> userDoa.increaseSportsScore(userId, delta)
-            "technology" -> userDoa.increaseTechnologyScore(userId, delta)
-            "general" -> userDoa.increaseGeneralScore(userId, delta)
+            "business" -> userDao.increaseBusinessScore(userId, delta)
+            "entertainment" -> userDao.increaseEntertainmentScore(userId, delta)
+            "health" -> userDao.increaseHealthScore(userId, delta)
+            "science" -> userDao.increaseScienceScore(userId, delta)
+            "sports" -> userDao.increaseSportsScore(userId, delta)
+            "technology" -> userDao.increaseTechnologyScore(userId, delta)
+            "general" -> userDao.increaseGeneralScore(userId, delta)
         }
     }
 
@@ -94,7 +100,7 @@ class NewLocalRepository private constructor(context: Context){
         val targetCount = 20
 
         // 1. 查询用户
-        val user = userDoa.getUserById(userId) ?: return newsDao.getLatestNews(20)
+        val user = userDao.getUserById(userId) ?: return newsDao.getLatestNews(20)
 
         // 2. 读取用户兴趣分数
         val categoryScoreMap  = linkedMapOf(
@@ -150,16 +156,5 @@ class NewLocalRepository private constructor(context: Context){
         }
 
         return recommendNewsList.take(targetCount)
-    }
-
-    companion object{
-        @Volatile
-        private var instance: NewLocalRepository? = null
-
-        fun getInstance(context: Context): NewLocalRepository{
-            return instance ?: synchronized(this){
-                instance ?: NewLocalRepository(context).also { instance = it }
-            }
-        }
     }
 }

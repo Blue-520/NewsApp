@@ -6,20 +6,21 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import com.blue.newsapp.ViewModel.MineViewModelFactory
+import com.blue.newsapp.R
 import com.blue.newsapp.ViewModel.RegisterViewModel
-import com.blue.newsapp.data.loacl.database.AppDatabase
 import com.blue.newsapp.databinding.FragmentRegisterBinding
-import com.blue.newsapp.repository.UserReposity
+import com.blue.newsapp.ui.UiState
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class RegisterFragment: Fragment() {
 
     private var _binding: FragmentRegisterBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var viewModel: RegisterViewModel
+    private val viewModel: RegisterViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -32,12 +33,6 @@ class RegisterFragment: Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        val userDao = AppDatabase.getDatabase(requireContext()).userDao()
-        val userReposity = UserReposity(userDao)
-
-        val factory = MineViewModelFactory(userReposity)
-        viewModel = ViewModelProvider(this, factory)[RegisterViewModel::class.java]
 
         // 点“去登录”
         binding.tvGoLogin.setOnClickListener {
@@ -62,15 +57,24 @@ class RegisterFragment: Fragment() {
     }
 
     private fun observeViewModel(){
-        viewModel.registerMessage.observe(viewLifecycleOwner){ message ->
-             if (message.isNotEmpty()){
-                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
-             }
-        }
+        viewModel.registerState.observe(viewLifecycleOwner){ state ->
+            when(state){
+                is UiState.Loading -> {
 
-        viewModel.registerSuccess.observe(viewLifecycleOwner){ success ->
-            if (success == true){
-                findNavController().navigateUp()
+                }
+
+                is UiState.Empty -> {
+
+                }
+
+                is UiState.Success -> {
+                    Toast.makeText(requireContext(), "注册成功", Toast.LENGTH_SHORT).show()
+                    findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
+                }
+
+                is UiState.Error -> {
+                    Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }

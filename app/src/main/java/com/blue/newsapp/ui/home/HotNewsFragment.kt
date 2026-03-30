@@ -7,11 +7,17 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.blue.newsapp.ViewModel.HotNewsViewModel
 import com.blue.newsapp.databinding.FragmentHotNewsBinding
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class HotNewsFragment: Fragment() {
     private var _binding : FragmentHotNewsBinding? = null
     private val binding get() = _binding!!
@@ -38,25 +44,45 @@ class HotNewsFragment: Fragment() {
         binding.newsRecyclerView.adapter = newsAdapter
         binding.newsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-        viewModel.loading.observe(viewLifecycleOwner){ isLoading ->
-            binding.swipeRefresh.isRefreshing = isLoading
-        }
-
-        viewModel.errorMessage.observe(viewLifecycleOwner){ msg ->
-            if (!msg.isNullOrEmpty()){
-                Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+        //收集分页数据
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.hotNewsFlow.collectLatest { pagingData ->
+                newsAdapter.submitData(pagingData)
             }
         }
 
-        viewModel.newList.observe(viewLifecycleOwner){ list ->
-            newsAdapter.submitList(list)
-        }
+        //观察分页加载状态
+        //LoadState有3个行为：refre刷新， append加载下一页， prepend加载上一页   3个状态：Loading加载中， NotLonding结束/空闲， Error失败
+        viewLifecycleOwner.lifecycleScope.launch {
+            newsAdapter.loadStateFlow.collectLatest { loadStates ->
 
-        binding.swipeRefresh.setOnRefreshListener {
-            viewModel.loadNews()
-        }
+                //下拉刷新圈圈：跟refresh绑定
+                binding.swipeRefresh.isRefreshing = loadStates.refresh is LoadState.Loading
 
-        viewModel.loadNewsIfNeeded()
+                //首屏加载失败
+                val refreshState = loadStates.refresh
+                if (refreshState is LoadState.Error) {
+                    Toast.makeText(requireContext(), "新闻加载失败：${refreshState.error.message ?: "请检查网络"}", Toast.LENGTH_SHORT).show()
+                }
+
+                //首屏加载成功但没有数据
+                val isListEmpty = loadStates.refresh is LoadState.NotLoading && newsAdapter.itemCount == 0          //首次加载已经结束 loading适配器里一条数据都没有
+                if (isListEmpty) {
+                    Toast.makeText(requireContext(), "暂无实时新闻", Toast.LENGTH_SHORT).show()
+                }
+
+                //追加加载失败（翻到后面一页失败）
+                val appendState = loadStates.append
+                if (appendState is LoadState.Error) {
+                    Toast.makeText(requireContext(), "加载更多失败：${appendState.error.message ?: "请稍后重试"}", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            //下拉刷新
+            binding.swipeRefresh.setOnRefreshListener {
+                newsAdapter.refresh()
+            }
+        }
     }
 
     override fun onDestroyView() {

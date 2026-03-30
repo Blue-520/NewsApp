@@ -1,37 +1,43 @@
 package com.blue.newsapp.ViewModel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.asLiveData
-import androidx.lifecycle.switchMap
-import com.blue.newsapp.data.loacl.database.UserPreferences
-import com.blue.newsapp.data.loacl.entity.FavoriteNewsEntity
-import com.blue.newsapp.repository.NewLocalRepository
-import kotlinx.coroutines.flow.first
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.blue.newsapp.data.remote.model.response.FavoriteNewsResponse
+import com.blue.newsapp.data.loacl.database.SessionManager
+import com.blue.newsapp.repository.FavoriteRepository
+import com.blue.newsapp.ui.UiState
+import dagger.hilt.android.lifecycle.HiltViewModel
+import jakarta.inject.Inject
+import kotlinx.coroutines.launch
 
-class FavoriteNewsViewModel(application: Application) : AndroidViewModel(application){
+@HiltViewModel
+class FavoriteNewsViewModel @Inject constructor(private val favoriteRepository: FavoriteRepository, private val sessionManager: SessionManager) : ViewModel(){
 
-   private val reposity = NewLocalRepository.getInstance(application)
+   private val _uiState = MutableLiveData<UiState<List<FavoriteNewsResponse>>>()
+   val uiState: LiveData<UiState<List<FavoriteNewsResponse>>> = _uiState
 
-   private val userPreferences = UserPreferences(application)
+   fun loadFavorites(){
+       viewModelScope.launch {
+           _uiState.value = UiState.Loading
 
-   private val currentUserId = userPreferences.userIdFlow.asLiveData()
+           if (!sessionManager.isLogin()){
+               _uiState.value = UiState.Empty("请先登录再查看收藏")
+               return@launch
+           }
 
-   val favoriteNewsList: LiveData<List<FavoriteNewsEntity>> = currentUserId.switchMap { userId ->
-       if (userId == -1L) {
-           MutableLiveData(emptyList())
-       } else {
-           reposity.getAllFavoriteNewsByUserId(userId)
+           val result = favoriteRepository.getFavorites()
+
+           result.onSuccess { list ->
+               _uiState.value = if (list.isEmpty()){
+                   UiState.Empty("暂无收藏")
+               }else{
+                   UiState.Success(list)
+               }
+           }.onFailure { e ->
+               _uiState.value = UiState.Error(e.message ?: "加载收藏失败")
+           }
        }
-   }
-
-
-   /**
-    * 判断当前是否已登录
-    */
-   suspend fun isLogin(): Boolean {
-       return userPreferences.isLoginFlow.first()
    }
 }
