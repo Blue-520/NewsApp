@@ -8,13 +8,17 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.blue.newsapp.R
 import com.blue.newsapp.ViewModel.NewsDetailViewModel
 import com.blue.newsapp.databinding.FragmentNewsDetailBinding
+import com.blue.newsapp.ui.NewsDetailEvent
+import com.blue.newsapp.ui.NewsDetailUiModel
 import com.blue.newsapp.ui.UiState
 import com.bumptech.glide.Glide
 import dagger.hilt.android.AndroidEntryPoint
@@ -109,46 +113,61 @@ class NewsDetailFragment: Fragment() {
     }
 
 
-    private fun observeViewModel(){
-        viewModel.uiState.observe(viewLifecycleOwner){ state ->
-            when(state){
-                UiState.Loading -> {
-                    binding.btnFavorite.isEnabled = false
-                    binding.btnSendComment.isEnabled = false
-                }
+    private fun observeViewModel() {
 
-                is UiState.Empty -> {
-                    Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
-                }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.uiState.collect { state ->
+                        when (state) {
+                            UiState.Loading -> {
+                                binding.btnFavorite.isEnabled = false
+                                binding.btnSendComment.isEnabled = false
+                            }
 
-                is UiState.Success -> {
-                    val data = state.data
+                            is UiState.Empty -> {
 
-                    binding.btnFavorite.isEnabled = !data.favoriteLoading
-                    binding.btnSendComment.isEnabled = !data.commentSubmitting
+                            }
 
-                    if (data.isFavorite){
-                        binding.btnFavorite.setImageResource(R.drawable.already_star)
-                    }else{
-                        binding.btnFavorite.setImageResource(R.drawable.not_star)
+                            is UiState.Success -> {
+                                val data = state.data
+
+                                if (data.isFavorite) {
+                                    binding.btnFavorite.setImageResource(R.drawable.already_star)
+                                } else {
+                                    binding.btnFavorite.setImageResource(R.drawable.not_star)
+                                }
+
+                                commentAdapter.submitList(data.comments)
+                            }
+
+                            is UiState.Error -> {
+                                binding.btnFavorite.isEnabled = true
+                                binding.btnSendComment.isEnabled = true
+
+                            }
+                        }
                     }
-
-                    commentAdapter.submitList(state.data.comments)
                 }
 
-                is UiState.Error -> {
-                    binding.btnFavorite.isEnabled = true
-                    binding.btnSendComment.isEnabled = true
-                    Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
+                launch {
+                    viewModel.eventFlow.collect { event ->
+                        when (event) {
+                            is NewsDetailEvent.ShowToast -> {
+                                Toast.makeText(requireContext(), event.message, Toast.LENGTH_SHORT)
+                                    .show()
+                            }
+
+                            is NewsDetailEvent.ClearCommentInput -> {
+                                binding.etComment.setText("")
+                            }
+
+                            is NewsDetailEvent.NavigateToLogin -> {
+
+                            }
+                        }
+                    }
                 }
-            }
-        }
-
-        viewModel.toastEvent.observe(viewLifecycleOwner){ message ->
-            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
-
-            if (message == "评论发布成功"){
-                binding.etComment.setText("")
             }
         }
     }

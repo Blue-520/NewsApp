@@ -1,6 +1,7 @@
 package com.blue.newsapp.repository
 
 import com.blue.newsapp.data.model.Article
+import com.blue.newsapp.data.network.NewsConstants
 import com.blue.newsapp.data.remote.api.NewsApi
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
@@ -33,7 +34,7 @@ class NewsRepository @Inject constructor(private val newsApi: NewsApi){
     //搜索新闻
     suspend fun getSearch(query: String): Result<List<Article>>{
         return try {
-            val response = newsApi.searchNews(q = query)
+            val response = newsApi.searchNews(q = query, apiKey = NewsConstants.apiKey)
             if (response.status == "ok"){
                 Result.success(response.articles)
             }else{

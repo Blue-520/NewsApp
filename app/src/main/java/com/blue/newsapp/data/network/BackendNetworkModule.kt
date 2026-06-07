@@ -1,6 +1,5 @@
 package com.blue.newsapp.data.network
 
-import com.blue.newsapp.data.loacl.database.SessionManager
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit

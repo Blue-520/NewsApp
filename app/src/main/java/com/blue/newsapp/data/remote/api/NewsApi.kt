@@ -42,9 +42,9 @@ interface NewsApi{
         page: Int = 1,
 
         @Query("pageSize")
-        pageSize: Int = 5,
+        pageSize: Int = 20,
 
         @Query("apiKey")
-        apiKey: String = NewsConstants.apiKey
+        apiKey: String
     ): NewsResponse
 }

@@ -1,7 +1,5 @@
 package com.blue.newsapp.ViewModel
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.blue.newsapp.data.loacl.database.SessionManager
@@ -9,10 +7,17 @@ import com.blue.newsapp.data.remote.model.request.AddCommentRequset
 import com.blue.newsapp.repository.CommentReposity
 import com.blue.newsapp.repository.FavoriteRepository
 import com.blue.newsapp.repository.NewLocalRepository
+import com.blue.newsapp.ui.NewsDetailEvent
 import com.blue.newsapp.ui.NewsDetailUiModel
 import com.blue.newsapp.ui.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -26,13 +31,13 @@ class NewsDetailViewModel @Inject constructor (
     // 页面主状态：
     // 用来告诉 Fragment 当前详情页是“加载中 / 成功 / 失败”
     // 如果是成功，还会携带 NewsDetailUiModel 这份页面数据
-    private val _uiState = MutableLiveData<UiState<NewsDetailUiModel>>()
-    val uiState: LiveData<UiState<NewsDetailUiModel>> = _uiState
+    private val _uiState = MutableStateFlow<UiState<NewsDetailUiModel>>(UiState.Loading)
+    val uiState: StateFlow<UiState<NewsDetailUiModel>> = _uiState.asStateFlow()
 
     // 一次性提示事件：
     // 比如“请先登录”“收藏成功”“评论失败”这种 Toast 文案
-    private val _toastEvent = MutableLiveData<String>()
-    val toastEvent: LiveData<String> = _toastEvent
+    private val _eventFlow  = MutableSharedFlow<NewsDetailEvent>()
+    val eventFlow: SharedFlow<NewsDetailEvent> = _eventFlow.asSharedFlow()
 
     // 当前详情页对应的新闻 url
     // 这里先缓存下来，表示“当前正在看的新闻是谁”
@@ -58,20 +63,15 @@ class NewsDetailViewModel @Inject constructor (
 
         // 保存当前新闻 url
         currentNewsUrl = url
-
-        // 先把页面设为“加载中”
-        // Fragment 观察到后，可以显示进度条/骨架屏等
         _uiState.value = UiState.Loading
 
         // 开启协程，异步执行后续逻辑
         viewModelScope.launch {
             try {
-                // 判断当前用户是否已登录
+
                 val isLogin = sessionManager.isLogin()
 
                 // 查询收藏状态：
-                // - 如果已登录，就去仓库查这条新闻是否已收藏
-                // - 如果没登录，直接认为“未收藏”
                 val favoriteResult = if (isLogin) {
                     favoriteRepository.isFavorite(url)
                 } else {
@@ -85,7 +85,7 @@ class NewsDetailViewModel @Inject constructor (
                 // - 成功：拿到 Boolean
                 // - 失败：页面进入错误状态，并结束协程
                 val isFavorite = favoriteResult.getOrElse {
-                    _uiState.value = UiState.Error(it.message ?: "收藏状态加载失败")
+                    _eventFlow.emit(NewsDetailEvent.ShowToast(it.message ?: "收藏状态加载失败"))
                     return@launch
                 }
 
@@ -93,7 +93,7 @@ class NewsDetailViewModel @Inject constructor (
                 // - 成功：拿到评论列表
                 // - 失败：页面进入错误状态，并结束协程
                 val comments = commentResult.getOrElse {
-                    _uiState.value = UiState.Error(it.message ?: "评论加载失败")
+                    _eventFlow.emit(NewsDetailEvent.ShowToast(it.message ?: "评论加载失败"))
                     return@launch
                 }
 
@@ -149,7 +149,7 @@ class NewsDetailViewModel @Inject constructor (
 
             // 没登录不给收藏，只弹提示
             if (!isLogin) {
-                _toastEvent.value = "请先登录再收藏"
+                _eventFlow.emit(NewsDetailEvent.ShowToast("请先登录再收藏"))
                 return@launch
             }
 
@@ -198,7 +198,11 @@ class NewsDetailViewModel @Inject constructor (
                     )
 
                     // 给用户提示
-                    _toastEvent.value = if (newFavorite) "收藏成功" else "已取消收藏"
+                    viewModelScope.launch {
+                        _eventFlow.emit(NewsDetailEvent.ShowToast(
+                            if (newFavorite) "收藏成功" else "已取消收藏")
+                        )
+                    }
 
                     // 只有“新增收藏成功”时，才增加兴趣分
                     if (newFavorite) {
@@ -211,7 +215,10 @@ class NewsDetailViewModel @Inject constructor (
                     _uiState.value = UiState.Success(
                         oldData.copy(favoriteLoading = false)
                     )
-                    _toastEvent.value = it.message ?: "操作失败"
+
+                    viewModelScope.launch {
+                        _eventFlow.emit(NewsDetailEvent.ShowToast(it.message ?: "操作失败"))
+                    }
                 }
             } catch (e: Exception) {
                 // 出现异常时，也要把 loading 状态恢复
@@ -219,7 +226,8 @@ class NewsDetailViewModel @Inject constructor (
                 _uiState.value = UiState.Success(
                     oldData.copy(favoriteLoading = false)
                 )
-                _toastEvent.value = e.message ?: "操作失败"
+
+                _eventFlow.emit(NewsDetailEvent.ShowToast(e.message ?: "收藏失败"))
             }
         }
     }
@@ -243,7 +251,9 @@ class NewsDetailViewModel @Inject constructor (
 
         // 评论内容为空，直接提示并结束
         if (content.isBlank()) {
-            _toastEvent.value = "评论不能为空"
+            viewModelScope.launch {
+                _eventFlow.emit(NewsDetailEvent.ShowToast("评论不能为空"))
+            }
             return
         }
 
@@ -253,7 +263,7 @@ class NewsDetailViewModel @Inject constructor (
 
             // 未登录不能评论
             if (!isLogin) {
-                _toastEvent.value = "请先登录后评论"
+                _eventFlow.emit(NewsDetailEvent.ShowToast("请先登录后再评论"))
                 return@launch
             }
 
@@ -289,14 +299,20 @@ class NewsDetailViewModel @Inject constructor (
                         )
                     )
 
-                    _toastEvent.value = "评论发布成功"
+                    viewModelScope.launch {
+                        _eventFlow.emit(NewsDetailEvent.ShowToast("评论发布成功"))
+                        _eventFlow.emit(NewsDetailEvent.ClearCommentInput)
+                    }
                 }.onFailure {
                     // 发表评论失败：
                     // 只需要恢复 commentSubmitting 状态即可
                     _uiState.value = UiState.Success(
                         oldData.copy(commentSubmitting = false)
                     )
-                    _toastEvent.value = it.message ?: "评论失败"
+
+                    viewModelScope.launch {
+                        _eventFlow.emit(NewsDetailEvent.ShowToast(it.message ?: "评论失败"))
+                    }
                 }
             } catch (e: Exception) {
                 // 异常兜底
@@ -304,7 +320,8 @@ class NewsDetailViewModel @Inject constructor (
                 _uiState.value = UiState.Success(
                     oldData.copy(commentSubmitting = false)
                 )
-                _toastEvent.value = e.message ?: "评论失败"
+
+                _eventFlow.emit(NewsDetailEvent.ShowToast(e.message ?: "评论失败"))
             }
         }
     }
@@ -336,12 +353,12 @@ class NewsDetailViewModel @Inject constructor (
                     )
                 }.onFailure {
                     // 刷新评论失败，只给提示，不切整页 Error
-                    _toastEvent.value = it.message ?: "评论刷新失败"
+                    _eventFlow.emit(NewsDetailEvent.ShowToast(it.message ?: "评论刷新失败"))
                 }
             } catch (e: Exception) {
                 // 异常兜底
                 e.printStackTrace()
-                _toastEvent.value = e.message ?: "评论刷新失败"
+                _eventFlow.emit(NewsDetailEvent.ShowToast(e.message ?: "评论刷新失败"))
             }
         }
     }

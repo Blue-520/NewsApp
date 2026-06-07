@@ -1,8 +1,9 @@
-package com.blue.newsapp.repository
+package com.blue.newsapp.data.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.blue.newsapp.data.model.Article
+import com.blue.newsapp.repository.NewsRepository
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 
@@ -10,18 +11,19 @@ import jakarta.inject.Singleton
 class SearchNewsPagingSource @Inject constructor(private val newsRepository: NewsRepository, private val query: String): PagingSource<Int, Article>() {
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Article> {
+        val currentPage = params.key ?: 1
+
+        val result = newsRepository.getSearch(query)
+
         return try {
-            val currentPage = params.key ?: 1
-
-            val result = newsRepository.getSearch(query)
-
             result.fold(
-                onSuccess = { newsList ->
+                onSuccess = { newList ->
                     LoadResult.Page(
-                        data = newsList,
+                        newList,
                         prevKey = if (currentPage == 1) null else currentPage - 1,
-                        nextKey = if (newsList.isEmpty()) null else currentPage + 1)
-                }, onFailure = { throwable ->
+                        nextKey = if (newList.isEmpty()) null else currentPage + 1)
+                },
+                onFailure = { throwable ->
                     LoadResult.Error(throwable)
                 }
             )
@@ -30,14 +32,12 @@ class SearchNewsPagingSource @Inject constructor(private val newsRepository: New
         }
     }
 
+    // 当 PagingSource 失效时，用于快速恢复滚动位置，简单起见可以先返回 null
     override fun getRefreshKey(state: PagingState<Int, Article>): Int? {
-        // anchorPosition = 当前屏幕上用户最近访问的位置
         val anchorPosition = state.anchorPosition ?: return null
 
-        // 找到离这个位置最近的那一页
         val anchorPage = state.closestPageToPosition(anchorPosition) ?: return null
 
-        // 推算刷新时应该从哪一页开始重新加载
-        return anchorPage.prevKey?.plus(1) ?: anchorPage.nextKey?.minus(1)
+        return anchorPage.prevKey?.plus(1) ?: anchorPage .nextKey?.minus(1)
     }
 }

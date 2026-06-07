@@ -1,8 +1,9 @@
-package com.blue.newsapp.repository
+package com.blue.newsapp.data.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.blue.newsapp.data.model.Article
+import com.blue.newsapp.repository.NewsRepository
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 

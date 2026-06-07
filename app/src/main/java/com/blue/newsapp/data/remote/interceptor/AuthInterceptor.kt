@@ -9,6 +9,7 @@ import okhttp3.Response
 
 @Singleton
 class AuthInterceptor @Inject constructor(private val sessionManager: SessionManager): Interceptor {
+
     override fun intercept(chain: Interceptor.Chain): Response {
 
         // 1. 拿到当前原始请求

@@ -18,7 +18,7 @@ class TokenAuthenticator @Inject constructor(private val sessionManager: Session
     private val lock = Any()
 
     override fun authenticate(route: Route?, response: Response): Request? {
-        // 如果已经重试过太多次，就不要再试了，防止死循环
+        // 如果已经重试过太多次，就不要再试了， 防止死循环
         if (responseCount(response) >= 2) return null
 
         synchronized(lock) {
@@ -32,7 +32,7 @@ class TokenAuthenticator @Inject constructor(private val sessionManager: Session
 
             // 如果本地 token 已经和失败请求里的 token 不一样，
             // 说明别的请求已经刷新成功了，这里直接用本地新 token 重试即可
-            if (!currentToken.isNullOrBlank() && currentToken != requestToken) {
+            if (!currentToken.isBlank() && currentToken != requestToken) {
                 return response.request.newBuilder()
                     .header("Authorization", "Bearer $currentToken")
                     .build()
