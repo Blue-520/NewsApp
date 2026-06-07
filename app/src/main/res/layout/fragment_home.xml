@@ -11,7 +11,7 @@
    <com.google.android.material.search.SearchBar
        android:id="@+id/searchBar"
        android:layout_width="0dp"
-       android:layout_height="wrap_content"
+       android:layout_height="40dp"
        android:hint="搜索新闻"
        android:backgroundTint="@color/on_primary"
        app:layout_constraintTop_toTopOf="parent"

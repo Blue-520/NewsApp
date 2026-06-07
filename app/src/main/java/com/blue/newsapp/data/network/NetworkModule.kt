@@ -1,35 +1,63 @@
 package com.blue.newsapp.data.network
 
+import com.blue.newsapp.BuildConfig
+import com.blue.newsapp.data.remote.api.NewsApi
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
+import jakarta.inject.Qualifier
+import jakarta.inject.Singleton
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class NewsLoggingInterceptor
+
+@Module
+@InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    // 这里先把 baseUrl 单独提出来，后面如果换接口平台，只改这里
     private const val BASE_URL = "https://newsapi.org"
 
     // 日志拦截器：开发阶段很好用，可以在 Logcat 里看请求和响应
-    private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY
+    @Provides
+    @Singleton
+    @NewsLoggingInterceptor
+    fun getLoggingInterceptor(): HttpLoggingInterceptor{
+        return HttpLoggingInterceptor().apply {
+            level = if (BuildConfig.DEBUG){
+                HttpLoggingInterceptor.Level.BASIC
+            }else{
+                HttpLoggingInterceptor.Level.NONE
+            }
+        }
     }
 
     // OkHttpClient：Retrofit 底层就是用它来真正发请求
-    private val okHttpClient = OkHttpClient.Builder()
-        .connectTimeout(10, TimeUnit.SECONDS)               //连接超时
-        .readTimeout(10, TimeUnit.SECONDS)                  //读取超时
-        .writeTimeout(10, TimeUnit.SECONDS)                 //写入超市
-        .addInterceptor(loggingInterceptor)                                 //添加日志拦截器
-        .build()
+    @Provides
+    @Singleton
+    fun getOkHttpClient(@NewsLoggingInterceptor loggingInterceptor: HttpLoggingInterceptor): OkHttpClient{
+        return OkHttpClient.Builder()
+            .connectTimeout(3, TimeUnit.SECONDS)
+            .readTimeout(3, TimeUnit.SECONDS)
+            .writeTimeout(3, TimeUnit.SECONDS)
+            .addInterceptor(loggingInterceptor)
+            .build()
+    }
 
-    private val retrofit =  Retrofit.Builder()
-        .baseUrl(BASE_URL)                                          //基础地址
-        .client(okHttpClient)                                                //绑定OkHttp
-        .addConverterFactory(GsonConverterFactory.create())         //Gson自动解析JSON
-        .build()
-
-    //对外暴露接口实例
-    val newsService: NewsService = retrofit.create<NewsService>(NewsService::class.java)
+    @Provides
+    @Singleton
+    fun provideNewsService(client: OkHttpClient): NewsApi{
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(NewsApi::class.java)
+    }
 }

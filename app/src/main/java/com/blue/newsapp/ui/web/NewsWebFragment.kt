@@ -18,6 +18,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.navArgs
 import com.blue.newsapp.databinding.FragmentNewsWebBinding
 
+
 class NewsWebFragment: Fragment() {
 
     private var _binding : FragmentNewsWebBinding? = null

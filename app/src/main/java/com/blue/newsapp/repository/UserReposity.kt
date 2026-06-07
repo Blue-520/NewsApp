@@ -3,8 +3,11 @@ package com.blue.newsapp.repository
 import androidx.lifecycle.LiveData
 import com.blue.newsapp.data.loacl.dao.UserDao
 import com.blue.newsapp.data.loacl.entity.UserEntity
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
 
-class UserReposity(private val userDao: UserDao) {
+@Singleton
+class UserReposity @Inject constructor (private val userDao: UserDao) {
 
     /**
      * 注册

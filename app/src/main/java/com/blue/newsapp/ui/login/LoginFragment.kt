@@ -6,21 +6,20 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.blue.newsapp.R
 import com.blue.newsapp.ViewModel.LoginViewModel
-import com.blue.newsapp.ViewModel.MineViewModelFactory
-import com.blue.newsapp.data.loacl.database.AppDatabase
-import com.blue.newsapp.data.loacl.database.UserPreferences
 import com.blue.newsapp.databinding.FragmentLoginBinding
-import com.blue.newsapp.repository.UserReposity
+import com.blue.newsapp.ui.UiState
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class LoginFragment: Fragment() {
     private var _binding: FragmentLoginBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var viewModel : LoginViewModel
+    private val viewModel : LoginViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -34,15 +33,6 @@ class LoginFragment: Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        // 1. 创建 Repository 和 UserPreferences
-        val userDao = AppDatabase.getDatabase(requireContext()).userDao()
-        val userRepository  = UserReposity(userDao)
-        val userPreference = UserPreferences(requireContext())
-
-        // 2. 创建 ViewModel
-        val factory = MineViewModelFactory(userRepository, userPreference)
-        viewModel = ViewModelProvider(this, factory)[LoginViewModel::class.java]
 
         // 点“去注册”
         binding.tvGoRegister.setOnClickListener {
@@ -65,18 +55,23 @@ class LoginFragment: Fragment() {
     }
 
     private fun observeViewModel(){
+        viewModel.loginState.observe(viewLifecycleOwner){ state ->
+            when(state){
+                is UiState.Loading -> {
 
-        // 监听提示消息
-        viewModel.loginMessage.observe(viewLifecycleOwner){ message ->
-            if (message.isNotEmpty()){
-                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
-            }
-        }
+                }
 
-        // 监听登录结果
-        viewModel.loginSuccess.observe(viewLifecycleOwner){ success ->
-            if (success == true){
-                findNavController().navigateUp()
+                is UiState.Empty -> {
+                    Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
+                }
+
+                is UiState.Success -> {
+                    Toast.makeText(requireContext(), "登陆成功", Toast.LENGTH_SHORT).show()
+                }
+
+                is UiState.Error -> {
+                    Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }

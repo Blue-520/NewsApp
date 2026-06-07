@@ -4,15 +4,23 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.blue.newsapp.ViewModel.SearchViewModel
 import com.blue.newsapp.databinding.FragmentSearchBinding
 import com.blue.newsapp.ui.home.NewsAdapter
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
-
+@AndroidEntryPoint
 class SearchFragment: Fragment() {
     private var _binding : FragmentSearchBinding? = null
     private val binding get() = _binding!!
@@ -79,29 +87,35 @@ class SearchFragment: Fragment() {
 
     private fun doSearch() {
         val query = binding.etSearch.text.toString().trim()
-        viewModel.searchNews(query)
+        viewModel.search(query)
     }
 
     private fun observeViewModel() {
-        viewModel.searchResultList.observe(viewLifecycleOwner) { list ->
-            newsAdapter.submitList(list)
-
-            binding.tvState.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
-            if (list.isEmpty()) {
-                binding.tvState.text = "没有搜索到相关新闻"
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED){
+                viewModel.searchFlow.collectLatest { pagingData ->
+                    newsAdapter.submitData(pagingData)
+                }
             }
         }
 
-        viewModel.loading.observe(viewLifecycleOwner){ isLoading ->
-            binding.loading.visibility = if (isLoading) View.VISIBLE else View.GONE
-        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            newsAdapter.loadStateFlow.collectLatest { loadStates ->
 
-        viewModel.errorMessage.observe(viewLifecycleOwner){ msg ->
-            if (!msg.isNullOrEmpty()){
-                binding.tvState.visibility = View.VISIBLE
-                binding.tvState.text = msg
-            }else{
-                binding.tvState.visibility = View.GONE
+                val refreshState = loadStates.refresh
+                if (refreshState is LoadState.Error) {
+                    Toast.makeText(requireContext(), "新闻加载失败：${refreshState.error.message ?: "请检查网络"}", Toast.LENGTH_SHORT).show()
+                }
+
+                val isListEmpty = loadStates.refresh is LoadState.NotLoading && newsAdapter.itemCount == 0
+                if (isListEmpty){
+                    Toast.makeText(requireContext(), "暂无实时新闻", Toast.LENGTH_SHORT).show()
+                }
+
+                val appendState = loadStates.append
+                if (appendState is LoadState.Error) {
+                    Toast.makeText(requireContext(), "加载更多失败：${appendState.error.message ?: "请稍后重试"}", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }

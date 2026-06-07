@@ -8,16 +8,23 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.blue.newsapp.R
 import com.blue.newsapp.ViewModel.NewsDetailViewModel
 import com.blue.newsapp.databinding.FragmentNewsDetailBinding
+import com.blue.newsapp.ui.NewsDetailEvent
+import com.blue.newsapp.ui.NewsDetailUiModel
+import com.blue.newsapp.ui.UiState
 import com.bumptech.glide.Glide
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class NewsDetailFragment: Fragment() {
     private var _binding : FragmentNewsDetailBinding? = null
     private val binding get() = _binding!!
@@ -59,29 +66,11 @@ class NewsDetailFragment: Fragment() {
         binding.rvComments.layoutManager = LinearLayoutManager(requireContext())
         binding.rvComments.adapter = commentAdapter
 
-        // 告诉 ViewModel 当前是哪条新闻
-        viewModel.setNewsUrl(url)
-
-
-        // 设置标题
+        // 设置新闻
         binding.detailTitle.text = title
-
-        // 设置来源
         binding.detailSource.text = "来源：$sourceName"
-
-        // 设置发布时间
         binding.detailPublishedAt.text = "发布时间：$publishedAt"
-
-        // 设置简介
-        binding.detailDescription.text =
-            if (description.isNotEmpty()) description else "暂无简介"
-
-        // Toolbar 返回
-        binding.detailToolbar.setNavigationOnClickListener {
-            navController.navigateUp()
-        }
-
-        // 加载新闻图片
+        binding.detailDescription.text = if (description.isNotEmpty()) description else "暂无简介"
         if (imageUrl.isEmpty()) {
             Log.d("aaa", "图片是空的")
             binding.detailImage.setImageResource(R.drawable.img_error)
@@ -94,58 +83,24 @@ class NewsDetailFragment: Fragment() {
                 .into(binding.detailImage)
         }
 
-        // 观察收藏状态
-        viewModel.favoriteNews.observe(viewLifecycleOwner){ favoriteNews ->
-            if (favoriteNews == null){
-                binding.btnFavorite.setImageResource(R.drawable.not_star)
-            }else{
-                binding.btnFavorite.setImageResource(R.drawable.already_star)
-            }
+        observeViewModel()
+
+        viewModel.loadNewsDetail(url)
+
+        // Toolbar 返回
+        binding.detailToolbar.setNavigationOnClickListener {
+            navController.navigateUp()
         }
 
         // 点击收藏 / 取消收藏
         binding.btnFavorite.setOnClickListener {
-            viewLifecycleOwner.lifecycleScope.launch {
-
-                val isLogin = viewModel.isLogin()
-
-                if (!isLogin){
-                    Toast.makeText(requireContext(), "请先登录再收藏", Toast.LENGTH_SHORT).show()
-                    return@launch
-                }
-
-                val currentFavorite = viewModel.favoriteNews.value
-
-                if (currentFavorite == null){
-                    viewModel.addFavorite( title = title, imageUrl = imageUrl, sourceName = sourceName, publishedAt = publishedAt, description = description, url = url)
-                    Toast.makeText(requireContext(), "收藏成功", Toast.LENGTH_SHORT).show()
-
-                    //加分
-                    viewModel.increaseScore(category)
-                }else{
-                    viewModel.removeFavorite(url)
-                    Toast.makeText(requireContext(), "已取消收藏", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-
-        // 观察评论列表
-        viewModel.commentList.observe(viewLifecycleOwner){ comments ->
-            commentAdapter.submitList(comments)
+           viewModel.toggleFavorite(title, imageUrl, sourceName, publishedAt, description, url, category)
         }
 
         //发布评论
         binding.btnSendComment.setOnClickListener {
-            val content = binding.etComment.text?.toString()?.trim().orEmpty()
-
-            if (content.isEmpty()){
-                Toast.makeText(requireContext(), "评论不能为空", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            viewModel.addComment(url, content)
-            binding.etComment.setText("")
-            Toast.makeText(requireContext(), "评论发布成功", Toast.LENGTH_SHORT).show()
+            val content = binding.etComment.text.toString().trim()
+            viewModel.addComment(content)
         }
 
         // 点击“查看原文”
@@ -153,6 +108,66 @@ class NewsDetailFragment: Fragment() {
             if (url.isNotEmpty()) {
                 val action = NewsDetailFragmentDirections.actionNewsDetailFragmentToNewsWebFragment(url = url)
                 navController.navigate(action)
+            }
+        }
+    }
+
+
+    private fun observeViewModel() {
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.uiState.collect { state ->
+                        when (state) {
+                            UiState.Loading -> {
+                                binding.btnFavorite.isEnabled = false
+                                binding.btnSendComment.isEnabled = false
+                            }
+
+                            is UiState.Empty -> {
+
+                            }
+
+                            is UiState.Success -> {
+                                val data = state.data
+
+                                if (data.isFavorite) {
+                                    binding.btnFavorite.setImageResource(R.drawable.already_star)
+                                } else {
+                                    binding.btnFavorite.setImageResource(R.drawable.not_star)
+                                }
+
+                                commentAdapter.submitList(data.comments)
+                            }
+
+                            is UiState.Error -> {
+                                binding.btnFavorite.isEnabled = true
+                                binding.btnSendComment.isEnabled = true
+
+                            }
+                        }
+                    }
+                }
+
+                launch {
+                    viewModel.eventFlow.collect { event ->
+                        when (event) {
+                            is NewsDetailEvent.ShowToast -> {
+                                Toast.makeText(requireContext(), event.message, Toast.LENGTH_SHORT)
+                                    .show()
+                            }
+
+                            is NewsDetailEvent.ClearCommentInput -> {
+                                binding.etComment.setText("")
+                            }
+
+                            is NewsDetailEvent.NavigateToLogin -> {
+
+                            }
+                        }
+                    }
+                }
             }
         }
     }

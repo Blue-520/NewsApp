@@ -1,71 +1,46 @@
 package com.blue.newsapp.ViewModel
 
-import android.app.Application
-import android.util.Log
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.blue.newsapp.data.model.Article
-import com.blue.newsapp.repository.NewLocalRepository
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.cachedIn
 import com.blue.newsapp.repository.NewsRepository
-import kotlinx.coroutines.launch
+import com.blue.newsapp.data.paging.SearchNewsPagingSource
+import dagger.hilt.android.lifecycle.HiltViewModel
+import jakarta.inject.Inject
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 
-class SearchViewModel(application: Application): AndroidViewModel(application) {
+@OptIn(ExperimentalCoroutinesApi::class)
+@HiltViewModel
+class SearchViewModel @Inject constructor(private val newsRepository: NewsRepository): ViewModel() {
 
-    private val repository = NewLocalRepository.getInstance(application)
+    // 保存当前搜索词
+    private val queryFlow = MutableStateFlow("")
 
-    // 搜索结果列表
-    private val _searchResultList = MutableLiveData<List<Article>>()
-    val searchResultList : LiveData<List<Article>> = _searchResultList
+    val config = PagingConfig(pageSize = 10, prefetchDistance = 2, enablePlaceholders = false)
 
-    // 错误信息
-    private val _errorMessage = MutableLiveData<String?>()
-    val errorMessage : LiveData<String?> = _errorMessage
-
-    // 加载状态
-    private val _loading = MutableLiveData<Boolean>()
-    val loading : LiveData<Boolean> = _loading
-
-    /**
-     * 执行搜索
-     */
-    fun searchNews(query: String){
-
-        // 关键词为空时，直接不搜索
-        if (query.isBlank()){
-            _searchResultList.value = emptyList()
-            _errorMessage.value = "请输入关键词"
-            return
-        }
-
-        viewModelScope.launch {
-            _loading.value = true
-            _errorMessage.value = ""
-
-            try {
-                val result = NewsRepository.getSearch(query)
-                result.onSuccess { articles ->
-                    _searchResultList.value = articles
-                    _errorMessage.value = null
-                }.onFailure { throwable ->
-                    _searchResultList.value = emptyList()
-                    _errorMessage.value = throwable.message ?: "搜索失败"
+    // 根据搜索词动态生成分页数据流
+    val searchFlow = queryFlow
+        .map { it.trim() }                                              // 先去掉首尾空格
+        .filter { it.isNotBlank() }                                     // 空关键词不搜索
+        .distinctUntilChanged()                                         // 相同关键词不重复搜索
+        .flatMapLatest { query ->                                       // 新关键词来了，取消旧搜索
+            Pager(
+                config = config,
+                pagingSourceFactory = {
+                    SearchNewsPagingSource(newsRepository, query)
                 }
-            }catch (e: Exception){
-                e.printStackTrace()
-                Log.d("aaa", "${e.message}")
-                _errorMessage.value = e.message ?: "搜索失败"
-            }finally {
-                _loading.value = false
-            }
+            ).flow
         }
-    }
+        .cachedIn(viewModelScope)
 
-    fun saveNews(news: Article, catrgory: String){
-        viewModelScope.launch {
-            repository.saveNews(news, catrgory)
-        }
+    fun search(query: String){
+        queryFlow.value = query.trim()
     }
 }

@@ -6,24 +6,17 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.blue.newsapp.data.loacl.entity.NewsCommentEntity
+import com.blue.newsapp.data.remote.model.response.CommentResponse
 import com.blue.newsapp.databinding.ItemNewsCommentBinding
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class NewsCommentAdapter: ListAdapter<NewsCommentEntity, NewsCommentAdapter.ViewHolder>(DiffCallBack()) {
+class NewsCommentAdapter: ListAdapter<CommentResponse, NewsCommentAdapter.ViewHolder>(DiffCallBack()) {
 
     class ViewHolder(val binding: ItemNewsCommentBinding): RecyclerView.ViewHolder(binding.root){
-        fun bind(comment: NewsCommentEntity){
+        fun bind(comment: CommentResponse){
             binding.tvCommentContent.text = comment.content
-            binding.tvCommentTime.text = formation(comment.createTime)
-        }
-
-        /**
-         * 把时间戳转换成 yyyy-MM-dd HH:mm 格式
-         */
-        private fun formation(timeMillis: Long): String{
-            val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-            return sdf.format(timeMillis)
+            binding.tvCommentTime.text = comment.createTime
         }
     }
 
@@ -39,21 +32,20 @@ class NewsCommentAdapter: ListAdapter<NewsCommentEntity, NewsCommentAdapter.View
         holder: ViewHolder,
         position: Int
     ) {
-        val comment = getItem(position)
-        holder.bind(comment)
+        holder.bind(getItem(position))
     }
 
-    class DiffCallBack: DiffUtil.ItemCallback<NewsCommentEntity>(){
+    class DiffCallBack: DiffUtil.ItemCallback<CommentResponse>(){
         override fun areItemsTheSame(
-            oldItem: NewsCommentEntity,
-            newItem: NewsCommentEntity
+            oldItem: CommentResponse,
+            newItem: CommentResponse
         ): Boolean {
             return oldItem.id == newItem.id
         }
 
         override fun areContentsTheSame(
-            oldItem: NewsCommentEntity,
-            newItem: NewsCommentEntity
+            oldItem: CommentResponse,
+            newItem: CommentResponse
         ): Boolean {
             return oldItem == newItem
         }
